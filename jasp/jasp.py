@@ -68,9 +68,9 @@ def calculation_is_ok(jobid=None):
         for f in os.listdir('.'):
             if 'o{0}'.format(jobid) in f:
                 with open(f) as outputfile:
-                    output = ['joboutput file: {0}'.format(jobid),
-                              '\n' + '=' * 66 + '\n',
-                              '{0}:\n'.format(f)]
+                    output = ['joboutput file: {0}'.format(os.getcwd()),
+'\n================================================================\n',
+                    '{0}:\n'.format(f)]
                     output += outputfile.readlines()
                     output += ['=' * 66,
                                '\n']
