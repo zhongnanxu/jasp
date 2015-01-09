@@ -27,7 +27,7 @@ ase-sort data for vasp
 import json, os, pickle, pwd, time, uuid
 from jasp import *
 from jasprc import *
-from collections import OrderedDict
+from ordereddict import OrderedDict
 
 
 def create_metadata(self, fname='METADATA'):
