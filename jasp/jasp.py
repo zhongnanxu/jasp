@@ -169,6 +169,25 @@ def Jasp(debug=None,
     if debug is not None:
         log.setLevel(debug)
 
+    # Delete the jobid if there is no CONTCAR and it's not in the queue. This happens
+    # if we cancel the job before it starts. We do this so jasp recognizes it as an 
+    # unrunned job
+    if (os.path.exists('jobid') 
+        and not job_in_queue(None)
+        and not os.path.exists('CONTCAR')):
+        os.unlink('jobid')
+
+    # Delete the CONTCAR if is empty. JASP already does this, but interrupts the code.
+    # This happens when the run is cancelled before the first structural iteration. We want
+    # a complete restart in this case.
+    if (os.path.exists('jobid')
+        and os.path.exists('CONTCAR')):
+        with open('CONTCAR') as f:
+            content = f.read()
+        if not len(content) > 0:
+            os.unlink('CONTCAR')
+            os.unlink('jobid')
+        
     log.debug('Jasp called in %s', os.getcwd())
     log.debug('kwargs = %s', kwargs)
     # special initialization NEB case
