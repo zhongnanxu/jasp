@@ -80,6 +80,7 @@ def calculation_is_ok(jobid=None):
             print 'Apparently an NEB calculation. Check it your self.'
             return True
                         
+
     with open('CONTCAR') as f:
         content = f.read()
 
@@ -109,7 +110,7 @@ def vasp_changed_bands(calc):
     
     with open('OUTCAR') as f:
         lines = f.readlines()
-        for i, line in enumerate(lines):
+        for i,line in enumerate(lines):
             if 'The number of bands has been changed from the values supplied' in line:
 
                 s = lines[i + 5]  # this is where the new bands are found
@@ -118,13 +119,11 @@ def vasp_changed_bands(calc):
                                           re.search(r"I found NBANDS\s+ =\s+([0-9]*).*=\s+([0-9]*)", s).groups()]
                 log.debug('Calculator nbands = {0}.\n'
                           'VASP found {1} nbands.\n'
-                          'Changed to {2} nbands.'.format(nbands_cur,
-                                                          nbands_ori,
-                                                          nbands_new))
+                          'Changed to {2} nbands.'.format(nbands_cur, nbands_ori, nbands_new))
 
                 calc.set(nbands=nbands_new)
                 calc.write_incar(calc.get_atoms())
-
+               
                 log.debug('calc.kwargs: {0}'.format(calc.kwargs))
                 if calc.kwargs.get('nbands', None) != nbands_new:
                     raise VaspWarning('''The number of bands was changed by VASP. This happens sometimes when you run in parallel. It causes problems with jasp. I have already updated your INCAR. You need to change the number of bands in your script to match what VASP used to proceed.\n\n ''' + '\n'.join(lines[i - 9: i + 8]))
@@ -403,21 +402,9 @@ def Jasp(debug=None,
 
     # create a METADATA file if it does not exist and we are not an NEB.
     if ((not os.path.exists('METADATA'))
-         and calc.int_params.get('images', None) is None):
-         calc.create_metadata()
+        and calc.int_params.get('images', None) is None):
+        calc.create_metadata()
 
-    # Check if beef is used
-    if calc.string_params.get('gga', None) == 'BF':
-        calc.set(luse_vdw=True,
-                 zab_vdw=-1.8867,
-                 lbeefens=True)
-
-    # check for luse_vdw, and make link to the required kernel if
-    # using vdw.
-    if calc.bool_params.get('luse_vdw', False):
-        if not os.path.exists('vdw_kernel.bindat'):
-            os.symlink(JASPRC['vdw_kernel.bindat'], 'vdw_kernel.bindat')
-        
     # Finally, check if VASP changed the bands
     vasp_changed_bands(calc)
     return calc
