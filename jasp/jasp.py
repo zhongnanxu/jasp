@@ -181,6 +181,7 @@ def Jasp(debug=None,
     # This happens when the run is cancelled before the first structural iteration. We want
     # a complete restart in this case.
     if (os.path.exists('jobid')
+        and not job_in_queue(None)
         and os.path.exists('CONTCAR')):
         with open('CONTCAR') as f:
             content = f.read()
