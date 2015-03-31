@@ -1072,3 +1072,14 @@ def get_energy_components(self, outputType=0):
     return energies
 
 Vasp.get_energy_components = get_energy_components
+
+def get_number_of_ionic_steps(self):
+    "Returns number of ionic steps from the OUTCAR."
+    nsteps = None
+    for line in open('OUTCAR'):
+        # find the last iteration number
+        if line.find('- Iteration') != -1:
+            nsteps = int(line.split('(')[0].split()[-1].strip())
+    return nsteps
+
+Vasp.get_number_of_ionic_steps = get_number_of_ionic_steps
