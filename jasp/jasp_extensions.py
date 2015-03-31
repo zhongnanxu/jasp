@@ -398,6 +398,8 @@ def calculation_required(self, atoms, quantities):
         self.converged = self.read_convergence()
 
     if not self.converged:
+        if not JASPRC['restart_unconverged']:
+            raise VaspNotConverged("This calculation did not converge. Set JASPRC['restart_unconverged'] = True to restart")
         return True
 
     return False
@@ -1089,7 +1091,7 @@ def get_number_of_ionic_steps(self):
 Vasp.get_number_of_ionic_steps = get_number_of_ionic_steps
 
 def get_beefens(self, n=-1):
-    '''Get the BEEFens 2000 ensemble energies from the OUTCAR.  
+    '''Get the BEEFens 2000 ensemble energies from the OUTCAR.
 
     This only works with Vasp 5.3.5 compiled with libbeef.
 
@@ -1108,7 +1110,7 @@ def get_beefens(self, n=-1):
     with open('OUTCAR') as f:
         lines = f.readlines()
         for i, line in enumerate(lines):
-            if 'BEEFens' in line:                
+            if 'BEEFens' in line:
                 nsamples = int(re.search('(\d+)', line).groups()[0])
                 beefens.append([float(x) for x in lines[i + 1: i + nsamples]])
     return np.array(beefens[n])
@@ -1121,7 +1123,7 @@ def get_orbital_occupations(self):
     [[s, p, d tot]] for each atom.
 
     You probably need to have used LORBIT=11 for this function to
-    work. 
+    work.
     '''
 
     # this finds the last entry of occupations. Sometimes, this is printed multiple times in the OUTCAR.
