@@ -29,7 +29,11 @@ JASPRC = {'vasp.executable.serial':'/opt/kitchingroup/vasp-5.2.12/build/bin/vasp
           'queue.ppn':1,
           'queue.mem':'2GB',
           'queue.jobname':'None',
-          'multiprocessing.cores_per_process':'None'}
+          'multiprocessing.cores_per_process':'None',
+          'multiprocessing.cores_per_process': 'None',
+          'vdw_kernel.bindat': '/opt/kitchingroup/vasp-5.3.5/vdw_kernel.bindat',
+          'restart_unconverged': True
+}
 
 def read_configuration(fname):
     '''reads jasprc configuration from fname'''
