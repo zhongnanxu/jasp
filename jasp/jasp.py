@@ -213,6 +213,8 @@ def Jasp(debug=None,
         calc = Vasp(restart, output_template, track_output)
 
         # Try to read sorting file
+        import ase.io
+        # Try to read sorting file
         if os.path.isfile('ase-sort.dat'):
             calc.sort = []
             calc.resort = []
@@ -223,6 +225,14 @@ def Jasp(debug=None,
                 data = line.split()
                 calc.sort.append(int(data[0]))
                 calc.resort.append(int(data[1]))
+            patoms = ase.io.read('POSCAR', format='vasp')[calc.resort]
+        else:
+            log.debug('you are in %s', os.getcwd())
+            patoms = ase.io.read('POSCAR', format='vasp')
+            calc.sort = range(len(atoms))
+            calc.resort = range(len(atoms))
+        calc.set_atoms(patoms)
+
         calc.read_incar()
         calc.read_potcar()  # sets xc
         if calc.int_params.get('images', None) is not None:
