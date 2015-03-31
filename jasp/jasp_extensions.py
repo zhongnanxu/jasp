@@ -351,10 +351,15 @@ def calculation_required(self, atoms, quantities):
             continue
         elif (self.list_params[key] is None
               or self.old_list_params[key] is None):
-            # handle this because one may be alist and the other is
-            # not, either way they are not the same.
+            # handle this because one may be a list and the other is
+            # not, either way they are not the same. We cannot just
+            # cast each element as a list, like we do in the next case
+            # because list(None) raises an exception.
+            log.debug('odd list_param case:')
+            log.debug('current: {0} \n'.format(self.list_params[key]))
+            log.debug('old: {0} \n'.format(self.old_list_params[key]))
             return True
-
+        # here we explicitly make both lists so we can compare them
         if list(self.list_params[key]) != list(self.old_list_params[key]):
             log.debug('list_params have changed')
             log.debug('current: {0}'.format(self.list_params[key]))
@@ -365,10 +370,9 @@ def calculation_required(self, atoms, quantities):
         if key == 'kpts':
             if (list(self.input_params[key])
                 != list(self.old_input_params[key])):
-                print '1. ', list(self.input_params[key])
-                print '2. ', list(self.old_input_params[key])
-                print 'KPTS FAILED'
-
+                log.debug('1. {}'.format(list(self.input_params[key])))
+                log.debug('2. {}'.format(list(self.old_input_params[key])))
+                log.debug('KPTS have changed.')
                 return True
             else:
                 continue
@@ -1083,3 +1087,61 @@ def get_number_of_ionic_steps(self):
     return nsteps
 
 Vasp.get_number_of_ionic_steps = get_number_of_ionic_steps
+
+def get_beefens(self, n=-1):
+    '''Get the BEEFens 2000 ensemble energies from the OUTCAR.  
+
+    This only works with Vasp 5.3.5 compiled with libbeef.
+
+    I am pretty sure this array is the deviations from the total
+    energy. There are usually 2000 of these, but it is not clear this will
+    always be the case. I assume the 2000 entries are always in the same
+    order, so you can calculate ensemble energy differences for reactions,
+    as long as the number of samples in the ensemble is the same.
+
+    There is usually more than one BEEFens section. By default we return
+    the last one. Choose another one with the the :par: n.
+
+    see http://suncat.slac.stanford.edu/facility/software/functional/
+    '''
+    beefens = []
+    with open('OUTCAR') as f:
+        lines = f.readlines()
+        for i, line in enumerate(lines):
+            if 'BEEFens' in line:                
+                nsamples = int(re.search('(\d+)', line).groups()[0])
+                beefens.append([float(x) for x in lines[i + 1: i + nsamples]])
+    return np.array(beefens[n])
+
+Vasp.get_beefens = get_beefens
+
+def get_orbital_occupations(self):
+    '''Read occuations from OUTCAR.
+    Returns a numpy array of
+    [[s, p, d tot]] for each atom.
+
+    You probably need to have used LORBIT=11 for this function to
+    work. 
+    '''
+
+    # this finds the last entry of occupations. Sometimes, this is printed multiple times in the OUTCAR.
+    with open('OUTCAR', 'r') as f:
+        lines = f.readlines()
+        start = None
+        for i,line in enumerate(lines):
+            if line.startswith(" total charge "):
+                start = i
+
+    if not i:
+        raise Exception('Occupations not found')
+
+    atoms = self.get_atoms()
+    occupations = []
+    for j in range(len(atoms)):
+        line = lines[start + 4 + j]
+        fields = line.split()
+        s, p, d, tot = [float(x) for x in fields[1:]]
+        occupations.append(np.array((s, p, d, tot)))
+    return np.array(occupations)
+
+Vasp.get_orbital_occupations = get_orbital_occupations
